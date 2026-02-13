@@ -2,7 +2,7 @@
 
 A calm, book-like HTTP server for reading markdown files and code with distraction-free, elegant styling. Perfect for documentation, long-form content, and project plans.
 
-<video src="docs/demo-mdview.mp4" controls width="100%" autoplay loop muted></video>
+[![Demo](docs/demo-thumbnail.jpg)](https://github.com/vntonyh/mdview/raw/master/docs/demo-mdview.mp4)
 
 ## Quick Start
 
