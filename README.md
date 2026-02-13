@@ -2,26 +2,7 @@
 
 A calm, book-like HTTP server for reading markdown files and code with distraction-free, elegant styling. Perfect for documentation, long-form content, and project plans.
 
-```
-┌───────────────────────────────────────────────┐
-│  ← Page     Reading Progress       Theme  →   │
-├────────┬──────────────────────────────────────┤
-│        │ # My Document                        │
-│ Plan   │ This is a calm, focused reading      │
-│ Nav    │ experience designed to feel like     │
-│        │ reading a physical book.             │
-│        │                                      │
-│        │ Features:                            │
-│        │ • Markdown rendering                 │
-│        │ • Code syntax highlighting           │
-│        │ • Mermaid diagrams                   │
-│        │ • Plan-based navigation              │
-│        │ • Light/dark themes                  │
-│        │ • Mobile responsive                  │
-│        │                                      │
-│        │ ← Previous    Next →                 │
-└────────┴──────────────────────────────────────┘
-```
+<video src="docs/demo-mdview.mp4" controls width="100%" autoplay loop muted></video>
 
 ## Quick Start
 
