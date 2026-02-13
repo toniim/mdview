@@ -2,6 +2,8 @@ BINARY = mdview
 VERSION = 0.1.0
 LDFLAGS = -ldflags "-s -w -X github.com/bilabl/mdview/cmd.Version=$(VERSION)"
 BINDIR = bin
+INSTALL_DIR = $(HOME)/.local/bin
+SKILL_DIR = $(HOME)/.claude/skills/mdview
 
 .PHONY: build install test clean generate css
 
@@ -10,7 +12,22 @@ build: css
 	go build $(LDFLAGS) -o $(BINDIR)/$(BINARY) .
 
 install: build
-	cp $(BINDIR)/$(BINARY) $(HOME)/.local/bin/$(BINARY)
+	@mkdir -p $(INSTALL_DIR)
+	cp $(BINDIR)/$(BINARY) $(INSTALL_DIR)/$(BINARY)
+	@echo ""
+	@echo "Installed $(BINARY) to $(INSTALL_DIR)/$(BINARY)"
+	@# Check if INSTALL_DIR is in PATH
+	@echo "$$PATH" | tr ':' '\n' | grep -qx "$(INSTALL_DIR)" \
+		|| echo "\n⚠️  $(INSTALL_DIR) is NOT in your PATH!\n   Add this to your shell profile (~/.bashrc or ~/.zshrc):\n\n   export PATH=\"\$$HOME/.local/bin:\$$PATH\"\n\n   Then reload: source ~/.bashrc"
+	@# Copy SKILL.md for Claude Code integration
+	@if [ ! -d "$(SKILL_DIR)" ]; then \
+		mkdir -p "$(SKILL_DIR)"; \
+		echo "Created $(SKILL_DIR)"; \
+	fi
+	@if [ -f SKILL.md ] && [ ! -f "$(SKILL_DIR)/SKILL.md" ]; then \
+		cp SKILL.md "$(SKILL_DIR)/SKILL.md"; \
+		echo "Copied SKILL.md to $(SKILL_DIR)/SKILL.md"; \
+	fi
 
 css:
 	@if [ ! -f assets/chroma-light.css ] || [ ! -f assets/chroma-dark.css ]; then \
