@@ -7,35 +7,26 @@ description: View markdown files with calm, book-like reading experience via HTT
 
 Single-binary Go HTTP server rendering markdown files with a calm, book-like reading experience.
 
-Replaces the Node.js `markdown-novel-viewer` skill with zero runtime dependencies.
+## Behavior
+
+When `/mdview` is invoked:
+- **No arguments**: Run `mdview serve . --host 0.0.0.0 --no-open` to browse the current working directory
+- **With path argument**: Run `mdview serve <path> --host 0.0.0.0 --no-open` to view the specified file or directory
+- **`stop`**: Run `mdview stop` to stop all running servers
+- Always use `--host 0.0.0.0 --no-open` flags
+- Display both Local and Network URLs from the output
 
 ## Quick Start
 
 ```bash
-# View a markdown file (auto-opens browser)
-mdview serve ./plans/my-plan/plan.md
+# View a markdown file
+mdview serve ./plans/my-plan/plan.md --host 0.0.0.0 --no-open
 
 # Browse a directory
-mdview serve ./plans/
-
-# Custom port + network access
-mdview serve ./docs --port 8080 --host 0.0.0.0
-
-# Foreground mode (JSON output for Claude Code integration)
-mdview serve ./README.md --foreground
+mdview serve ./plans/ --host 0.0.0.0 --no-open
 
 # Stop all running servers
 mdview stop
-```
-
-## Slash Command
-
-Use `/preview` for quick access:
-
-```bash
-/preview plans/my-plan/plan.md    # View markdown file
-/preview plans/                   # Browse directory
-/preview --stop                   # Stop server
 ```
 
 ## Features
