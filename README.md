@@ -2,7 +2,7 @@
 
 A calm, book-like HTTP server for reading markdown files and code with distraction-free, elegant styling. Perfect for documentation, long-form content, and project plans.
 
-![Demo](docs/demo-mdview.gif)
+![Demo](docs/demo-preview.gif)
 
 ## Quick Start
 
