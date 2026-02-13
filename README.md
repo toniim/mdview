@@ -29,7 +29,7 @@ A calm, book-like HTTP server for reading markdown files and code with distracti
 
 ```bash
 # Build from source (requires Go 1.22+)
-git clone https://github.com/bilabl/mdview.git
+git clone https://github.com/vntonyh/mdview.git
 cd mdview && make install
 ```
 
