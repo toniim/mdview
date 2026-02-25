@@ -22,6 +22,7 @@ var (
 	open       bool
 	noOpen     bool
 	foreground bool
+	public     bool
 )
 
 var serveCmd = &cobra.Command{
@@ -34,7 +35,8 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	serveCmd.Flags().IntVarP(&port, "port", "p", 3456, "Server port (auto-increment if busy)")
-	serveCmd.Flags().StringVarP(&host, "host", "H", "localhost", "Bind address (0.0.0.0 for remote)")
+	serveCmd.Flags().StringVarP(&host, "host", "H", "0.0.0.0", "Bind address")
+	serveCmd.Flags().BoolVar(&public, "public", false, "Bind to 0.0.0.0 (shortcut for --host 0.0.0.0)")
 	serveCmd.Flags().BoolVarP(&open, "open", "o", true, "Open browser")
 	serveCmd.Flags().BoolVar(&noOpen, "no-open", false, "Don't open browser")
 	serveCmd.Flags().BoolVar(&foreground, "foreground", false, "Foreground mode (JSON output for CC)")
@@ -53,6 +55,9 @@ type serveResult struct {
 func runServe(cmd *cobra.Command, args []string) error {
 	if noOpen {
 		open = false
+	}
+	if public {
+		host = "0.0.0.0"
 	}
 
 	if len(args) == 0 {
@@ -87,7 +92,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	case "file":
 		urlPath = "/view?file=" + netURLEncode(resolved.Path)
 	case "directory":
-		urlPath = "/browse?dir=" + netURLEncode(resolved.Path)
+		urlPath = "/"
 	}
 
 	url := fmt.Sprintf("http://%s:%d%s", displayHost, actualPort, urlPath)
@@ -97,10 +102,13 @@ func runServe(cmd *cobra.Command, args []string) error {
 		networkURL = fmt.Sprintf("http://%s:%d%s", ip, actualPort, urlPath)
 	}
 
-	// Build allowed directories
+	// Build allowed directories and root dir
+	rootDir := resolved.Path
 	allowedDirs := []string{filepath.Dir(resolved.Path)}
 	if resolved.Type == "directory" {
 		allowedDirs = []string{resolved.Path}
+	} else {
+		rootDir = filepath.Dir(resolved.Path)
 	}
 
 	// Create and start server
@@ -108,6 +116,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		Host:        host,
 		Port:        actualPort,
 		AllowedDirs: allowedDirs,
+		RootDir:     rootDir,
 	})
 
 	// Write PID file

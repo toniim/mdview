@@ -3,7 +3,6 @@ package navigation
 import (
 	"fmt"
 	"html"
-	"net/url"
 	"os"
 	"path/filepath"
 )
@@ -80,7 +79,7 @@ func GetNavigationContext(filePath string) *NavContext {
 }
 
 // GenerateNavFooter generates prev/next navigation footer HTML.
-func GenerateNavFooter(filePath string) string {
+func GenerateNavFooter(filePath, rootDir string) string {
 	navCtx := GetNavigationContext(filePath)
 
 	if navCtx.Prev == nil && navCtx.Next == nil {
@@ -91,10 +90,10 @@ func GenerateNavFooter(filePath string) string {
 	if navCtx.Prev != nil {
 		_, err := os.Stat(navCtx.Prev.File)
 		if err == nil {
-			prevHTML = fmt.Sprintf(`<a href="/view?file=%s" class="nav-prev">
+			prevHTML = fmt.Sprintf(`<a href="%s" class="nav-prev">
       <span class="nav-arrow">&larr;</span>
       <span class="nav-label">%s</span>
-    </a>`, url.QueryEscape(navCtx.Prev.File), html.EscapeString(navCtx.Prev.Name))
+    </a>`, ViewURL(navCtx.Prev.File, rootDir), html.EscapeString(navCtx.Prev.Name))
 		} else {
 			prevHTML = fmt.Sprintf(`<span class="nav-prev nav-unavailable" title="Phase planned but not yet implemented">
       <span class="nav-arrow">&larr;</span>
@@ -108,10 +107,10 @@ func GenerateNavFooter(filePath string) string {
 	if navCtx.Next != nil {
 		_, err := os.Stat(navCtx.Next.File)
 		if err == nil {
-			nextHTML = fmt.Sprintf(`<a href="/view?file=%s" class="nav-next">
+			nextHTML = fmt.Sprintf(`<a href="%s" class="nav-next">
       <span class="nav-label">%s</span>
       <span class="nav-arrow">&rarr;</span>
-    </a>`, url.QueryEscape(navCtx.Next.File), html.EscapeString(navCtx.Next.Name))
+    </a>`, ViewURL(navCtx.Next.File, rootDir), html.EscapeString(navCtx.Next.Name))
 		} else {
 			nextHTML = fmt.Sprintf(`<span class="nav-next nav-unavailable" title="Phase planned but not yet implemented">
       <span class="nav-label">%s</span>

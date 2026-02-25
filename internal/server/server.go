@@ -11,6 +11,7 @@ type Config struct {
 	Host        string
 	Port        int
 	AllowedDirs []string
+	RootDir     string
 }
 
 type Server struct {

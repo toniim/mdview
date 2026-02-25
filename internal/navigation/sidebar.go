@@ -3,7 +3,6 @@ package navigation
 import (
 	"fmt"
 	"html"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +20,7 @@ type phaseGroup struct {
 }
 
 // GenerateNavSidebar generates the plan navigation sidebar HTML.
-func GenerateNavSidebar(filePath string) string {
+func GenerateNavSidebar(filePath, rootDir string) string {
 	navCtx := GetNavigationContext(filePath)
 	if !navCtx.PlanInfo.IsPlan {
 		return ""
@@ -96,9 +95,9 @@ func GenerateNavSidebar(filePath string) string {
 				href = "#" + phase.Anchor
 				isInlineSection = true
 			} else if phase.Anchor != "" {
-				href = fmt.Sprintf("/view?file=%s#%s", url.QueryEscape(phase.File), phase.Anchor)
+				href = ViewURL(phase.File, rootDir) + "#" + phase.Anchor
 			} else {
-				href = fmt.Sprintf("/view?file=%s", url.QueryEscape(phase.File))
+				href = ViewURL(phase.File, rootDir)
 			}
 
 			dataAnchor := ""

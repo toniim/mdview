@@ -52,63 +52,46 @@ func getMimeType(filePath string) string {
 }
 
 func (s *Server) registerRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/", s.handleRoot)
-	mux.HandleFunc("/view", s.handleView)
-	mux.HandleFunc("/browse", s.handleBrowse)
 	mux.HandleFunc("/assets/", s.handleAssets)
 	mux.HandleFunc("/file/", s.handleFile)
+	mux.HandleFunc("/", s.handlePath)
 }
 
-func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		sendError(w, 404, "Not found")
-		return
-	}
-	w.Header().Set("Content-Type", "text/html")
-	fmt.Fprint(w, `<!DOCTYPE html>
-<html>
-<head>
-  <title>Markdown Novel Viewer</title>
-  <style>
-    body { font-family: system-ui; max-width: 600px; margin: 2rem auto; padding: 1rem; }
-    h1 { color: #8b4513; }
-    code { background: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px; }
-    .routes { background: #faf8f3; padding: 1rem; border-radius: 8px; margin: 1rem 0; }
-  </style>
-</head>
-<body>
-  <h1>Markdown Novel Viewer</h1>
-  <p>A calm, book-like viewer for markdown files.</p>
-  <div class="routes">
-    <h3>Routes</h3>
-    <ul>
-      <li><code>/view?file=/path/to/file.md</code> - View markdown</li>
-      <li><code>/browse?dir=/path/to/dir</code> - Browse directory</li>
-    </ul>
-  </div>
-  <p>Use <code>mdview serve &lt;path&gt;</code> to start viewing files.</p>
-</body>
-</html>`)
-}
+// handlePath is the unified handler: stat the path, directory → browse, file → view.
+func (s *Server) handlePath(w http.ResponseWriter, r *http.Request) {
+	relPath := strings.TrimPrefix(r.URL.Path, "/")
 
-func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
-	filePath := r.URL.Query().Get("file")
-	if filePath == "" {
-		sendError(w, 400, "Missing ?file= parameter")
+	// Root path → browse root directory
+	if relPath == "" {
+		s.serveBrowse(w, s.config.RootDir)
 		return
 	}
 
-	if !isPathSafe(filePath, s.config.AllowedDirs) {
+	decoded, err := url.PathUnescape(relPath)
+	if err != nil {
+		sendError(w, 400, "Invalid path")
+		return
+	}
+
+	fullPath := filepath.Join(s.config.RootDir, decoded)
+
+	if !isPathSafe(fullPath, s.config.AllowedDirs) {
 		sendError(w, 403, "Access denied")
 		return
 	}
 
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		sendError(w, 404, "File not found")
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		sendError(w, 404, "Not found")
 		return
 	}
 
-	pageHTML, err := s.generateFullPage(filePath)
+	if info.IsDir() {
+		s.serveBrowse(w, fullPath)
+		return
+	}
+
+	pageHTML, err := s.generateFullPage(fullPath)
 	if err != nil {
 		sendError(w, 500, "Error rendering file")
 		return
@@ -118,13 +101,7 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, pageHTML)
 }
 
-func (s *Server) handleBrowse(w http.ResponseWriter, r *http.Request) {
-	dirPath := r.URL.Query().Get("dir")
-	if dirPath == "" {
-		sendError(w, 400, "Missing ?dir= parameter")
-		return
-	}
-
+func (s *Server) serveBrowse(w http.ResponseWriter, dirPath string) {
 	if !isPathSafe(dirPath, s.config.AllowedDirs) {
 		sendError(w, 403, "Access denied")
 		return
@@ -136,7 +113,7 @@ func (s *Server) handleBrowse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	htmlContent, err := renderDirectoryBrowser(dirPath)
+	htmlContent, err := s.renderDirectoryBrowser(dirPath)
 	if err != nil {
 		sendError(w, 500, "Error listing directory")
 		return
@@ -167,12 +144,16 @@ func (s *Server) handleAssets(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleFile(w http.ResponseWriter, r *http.Request) {
-	filePath := strings.TrimPrefix(r.URL.Path, "/file/")
-	// URL decode
-	filePath, err := url.PathUnescape(filePath)
+	rawPath := strings.TrimPrefix(r.URL.Path, "/file/")
+	filePath, err := url.PathUnescape(rawPath)
 	if err != nil {
 		sendError(w, 400, "Invalid path")
 		return
+	}
+
+	// If path is not absolute, resolve relative to root dir
+	if !filepath.IsAbs(filePath) {
+		filePath = filepath.Join(s.config.RootDir, filePath)
 	}
 
 	if !isPathSafe(filePath, s.config.AllowedDirs) {
@@ -206,13 +187,15 @@ func (s *Server) generateFullPage(filePath string) (string, error) {
 
 	tocHTML := renderer.RenderTOCHTML(result.TOC)
 
+	rootDir := s.config.RootDir
+
 	var navSidebar, navFooter string
 	var planInfo *navigation.PlanInfo
 	var navCtx *navigation.NavContext
 
 	if !isCode {
-		navSidebar = navigation.GenerateNavSidebar(filePath)
-		navFooter = navigation.GenerateNavFooter(filePath)
+		navSidebar = navigation.GenerateNavSidebar(filePath, rootDir)
+		navFooter = navigation.GenerateNavFooter(filePath, rootDir)
 		planInfo = navigation.DetectPlan(filePath)
 		navCtx = navigation.GetNavigationContext(filePath)
 	} else {
@@ -220,13 +203,14 @@ func (s *Server) generateFullPage(filePath string) (string, error) {
 		navCtx = &navigation.NavContext{}
 	}
 
-	// Generate back button
+	// Generate back button using relative browse URL
 	parentDir := filepath.Dir(filePath)
-	backButton := fmt.Sprintf(`<a href="/browse?dir=%s" class="icon-btn back-btn" title="Back to folder">
+	backURL := navigation.BrowseURL(parentDir, rootDir)
+	backButton := fmt.Sprintf(`<a href="%s" class="icon-btn back-btn" title="Back to folder">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M19 12H5M12 19l-7-7 7-7"/>
       </svg>
-    </a>`, url.QueryEscape(parentDir))
+    </a>`, backURL)
 
 	// Generate header nav
 	var headerNav string
@@ -234,18 +218,18 @@ func (s *Server) generateFullPage(filePath string) (string, error) {
 		var prevBtn, nextBtn string
 		if navCtx.Prev != nil {
 			if _, err := os.Stat(navCtx.Prev.File); err == nil {
-				prevBtn = fmt.Sprintf(`<a href="/view?file=%s" class="header-nav-btn prev" title="%s">
+				prevBtn = fmt.Sprintf(`<a href="%s" class="header-nav-btn prev" title="%s">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
           <span>Prev</span>
-        </a>`, url.QueryEscape(navCtx.Prev.File), html.EscapeString(navCtx.Prev.Name))
+        </a>`, navigation.ViewURL(navCtx.Prev.File, rootDir), html.EscapeString(navCtx.Prev.Name))
 			}
 		}
 		if navCtx.Next != nil {
 			if _, err := os.Stat(navCtx.Next.File); err == nil {
-				nextBtn = fmt.Sprintf(`<a href="/view?file=%s" class="header-nav-btn next" title="%s">
+				nextBtn = fmt.Sprintf(`<a href="%s" class="header-nav-btn next" title="%s">
           <span>Next</span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-        </a>`, url.QueryEscape(navCtx.Next.File), html.EscapeString(navCtx.Next.Name))
+        </a>`, navigation.ViewURL(navCtx.Next.File, rootDir), html.EscapeString(navCtx.Next.Name))
 			}
 		}
 		headerNav = fmt.Sprintf(`<div class="header-nav">%s%s</div>`, prevBtn, nextBtn)
@@ -309,16 +293,20 @@ func getFileIcon(filename string) string {
 	return "\U0001F4C4"
 }
 
-func renderDirectoryBrowser(dirPath string) (string, error) {
+func (s *Server) renderDirectoryBrowser(dirPath string) (string, error) {
+	rootDir := s.config.RootDir
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return "", err
 	}
 
 	baseName := filepath.Base(dirPath)
-	displayPath := dirPath
-	if len(displayPath) > 50 {
-		displayPath = "..." + displayPath[len(displayPath)-47:]
+	// Show relative path from root
+	displayPath, _ := filepath.Rel(rootDir, dirPath)
+	if displayPath == "." {
+		displayPath = "/"
+	} else {
+		displayPath = "/" + displayPath
 	}
 
 	type dirEntry struct {
@@ -352,26 +340,29 @@ func renderDirectoryBrowser(dirPath string) (string, error) {
 
 	var listHTML strings.Builder
 
-	// Parent directory
+	// Parent directory (only if not already at root)
 	parentDir := filepath.Dir(dirPath)
-	if parentDir != dirPath {
+	cleanDir := filepath.Clean(dirPath)
+	cleanRoot := filepath.Clean(rootDir)
+	if cleanDir != cleanRoot && parentDir != dirPath {
+		parentURL := navigation.BrowseURL(parentDir, rootDir)
 		fmt.Fprintf(&listHTML, `<li class="dir-item parent">
-      <a href="/browse?dir=%s">
+      <a href="%s">
         <span class="icon">📁</span>
         <span class="name">..</span>
       </a>
-    </li>`, url.QueryEscape(parentDir))
+    </li>`, parentURL)
 	}
 
 	// Directories
 	for _, d := range dirs {
 		fullPath := filepath.Join(dirPath, d.Name)
 		fmt.Fprintf(&listHTML, `<li class="dir-item folder">
-      <a href="/browse?dir=%s">
+      <a href="%s">
         <span class="icon">📁</span>
         <span class="name">%s/</span>
       </a>
-    </li>`, url.QueryEscape(fullPath), html.EscapeString(d.Name))
+    </li>`, navigation.BrowseURL(fullPath, rootDir), html.EscapeString(d.Name))
 	}
 
 	// Files - all text files are viewable via /view, binary files via /file
@@ -391,13 +382,14 @@ func renderDirectoryBrowser(dirPath string) (string, error) {
 		isMarkdown := ext == ".md"
 
 		if binaryExts[ext] {
-			// Binary files: serve directly
+			// Binary files: serve via /file/ with relative path
+			relFile, _ := filepath.Rel(rootDir, fullPath)
 			fmt.Fprintf(&listHTML, `<li class="dir-item file">
         <a href="/file/%s" target="_blank">
           <span class="icon">%s</span>
           <span class="name">%s</span>
         </a>
-      </li>`, url.PathEscape(fullPath), icon, html.EscapeString(f.Name))
+      </li>`, navigation.EncodePath(relFile), icon, html.EscapeString(f.Name))
 		} else {
 			// All text files: view in reader
 			cls := "file code"
@@ -405,11 +397,11 @@ func renderDirectoryBrowser(dirPath string) (string, error) {
 				cls = "file markdown"
 			}
 			fmt.Fprintf(&listHTML, `<li class="dir-item %s">
-        <a href="/view?file=%s">
+        <a href="%s">
           <span class="icon">%s</span>
           <span class="name">%s</span>
         </a>
-      </li>`, cls, url.QueryEscape(fullPath), icon, html.EscapeString(f.Name))
+      </li>`, cls, navigation.ViewURL(fullPath, rootDir), icon, html.EscapeString(f.Name))
 		}
 	}
 
