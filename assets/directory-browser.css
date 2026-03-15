@@ -29,6 +29,21 @@ header {
   border-bottom: 1px solid #e0dcd4;
 }
 
+.home-link {
+  display: inline-block;
+  font-size: 0.85rem;
+  color: #8b4513;
+  text-decoration: none;
+  margin-bottom: 0.5rem;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.home-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 header h1 {
   font-family: 'Libre Baskerville', Georgia, serif;
   font-size: 1.75rem;

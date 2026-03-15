@@ -203,14 +203,20 @@ func (s *Server) generateFullPage(filePath string) (string, error) {
 		navCtx = &navigation.NavContext{}
 	}
 
-	// Generate back button using relative browse URL
+	// Generate home + back buttons
+	homeButton := `<a href="/" class="icon-btn home-btn" title="Home">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22"/>
+      </svg>
+    </a>`
 	parentDir := filepath.Dir(filePath)
 	backURL := navigation.BrowseURL(parentDir, rootDir)
-	backButton := fmt.Sprintf(`<a href="%s" class="icon-btn back-btn" title="Back to folder">
+	backButton := fmt.Sprintf(`%s<a href="%s" class="icon-btn back-btn" title="Back to folder">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M19 12H5M12 19l-7-7 7-7"/>
       </svg>
-    </a>`, backURL)
+    </a>`, homeButton, backURL)
 
 	// Generate header nav
 	var headerNav string
@@ -415,6 +421,11 @@ func (s *Server) renderDirectoryBrowser(dirPath string) (string, error) {
 		css = string(data)
 	}
 
+	homeLink := ""
+	if cleanDir != cleanRoot {
+		homeLink = `<a href="/" class="home-link" title="Home">🏠 Home</a>`
+	}
+
 	return fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -426,6 +437,7 @@ func (s *Server) renderDirectoryBrowser(dirPath string) (string, error) {
 <body>
   <div class="container">
     <header>
+      %s
       <h1>📁 %s</h1>
       <p class="path">%s</p>
     </header>
@@ -438,6 +450,7 @@ func (s *Server) renderDirectoryBrowser(dirPath string) (string, error) {
 </html>`,
 		html.EscapeString(baseName),
 		css,
+		homeLink,
 		html.EscapeString(baseName),
 		html.EscapeString(displayPath),
 		listHTML.String(),

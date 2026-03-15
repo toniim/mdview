@@ -223,6 +223,12 @@
           toggleSidebar();
         }
         break;
+      case 'h':
+      case 'H':
+        if (!e.ctrlKey && !e.metaKey) {
+          window.location.href = '/';
+        }
+        break;
     }
   }
 

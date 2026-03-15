@@ -45,6 +45,7 @@ func newGoldmark() goldmark.Markdown {
 		),
 		goldmark.WithRendererOptions(
 			goldhtml.WithUnsafe(),
+			goldhtml.WithHardWraps(),
 		),
 	)
 }

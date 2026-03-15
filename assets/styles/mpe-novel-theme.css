@@ -1,0 +1,240 @@
+/**
+ * mdview Novel Theme - Markdown Preview Enhanced
+ * Matches mdview's warm, paper-like aesthetic
+ */
+
+/* Load fonts */
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* Use the container class that MPE generates */
+.markdown-preview {
+  /* Colors - Light Theme */
+  --bg-primary: #faf8f3;
+  --bg-secondary: #f5f2eb;
+  --bg-tertiary: #ebe7de;
+  --text-heading: #3a3a3a;
+  --text-primary: #5a5a5a;
+  --text-secondary: #6a6a6a;
+  --text-muted: #8c8c8c;
+  --accent: #8b4513;
+  --accent-hover: #6d360f;
+  --border: #e8e4db;
+  --border-light: #f0ece3;
+  --code-bg: #f8f5ef;
+  --link: #5c4033;
+  --link-hover: #8b4513;
+
+  /* Typography */
+  --font-heading: 'Merriweather', Georgia, serif;
+  --font-body: 'Merriweather', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Headings */
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  color: var(--text-heading);
+  line-height: 1.3;
+  margin: 2rem 0 1rem;
+}
+
+.markdown-preview h1 {
+  font-size: 2rem;
+  margin-top: 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border);
+  text-align: center;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5rem;
+  margin-top: 3rem;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25rem;
+}
+
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  font-size: 1rem;
+  text-align: left;
+}
+
+/* Paragraphs */
+.markdown-preview p {
+  margin-bottom: 1rem;
+}
+
+/* Links */
+.markdown-preview a {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  transition: color 0.2s, text-decoration-color 0.2s;
+}
+
+.markdown-preview a:hover {
+  color: var(--link-hover);
+  text-decoration-color: var(--link-hover);
+}
+
+/* Lists */
+.markdown-preview ul,
+.markdown-preview ol {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.markdown-preview li {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-preview li>ul,
+.markdown-preview li>ol {
+  margin: 0.5rem 0;
+}
+
+/* Task lists (GFM) */
+.markdown-preview ul:has(input[type="checkbox"]) {
+  list-style: none;
+  padding-left: 0;
+}
+
+.markdown-preview ul:has(input[type="checkbox"]) li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.markdown-preview input[type="checkbox"] {
+  margin-top: 0.35rem;
+  accent-color: var(--accent);
+}
+
+/* Code - inline */
+.markdown-preview code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background-color: var(--code-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  color: var(--accent);
+}
+
+/* Code blocks */
+.markdown-preview pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.markdown-preview pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* Blockquotes */
+.markdown-preview blockquote {
+  border-left: 4px solid var(--accent);
+  background-color: var(--bg-secondary);
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+}
+
+.markdown-preview blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* Tables */
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.markdown-preview th {
+  background-color: var(--bg-secondary);
+  font-weight: 600;
+  font-family: var(--font-heading);
+}
+
+.markdown-preview tr:nth-child(even) {
+  background-color: var(--bg-secondary);
+}
+
+/* Horizontal rule */
+.markdown-preview hr {
+  border: none;
+  height: 1px;
+  background-color: var(--border);
+  margin: 2rem 0;
+}
+
+/* Images */
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+/* Strong and emphasis */
+.markdown-preview strong {
+  font-weight: 700;
+  color: var(--text-heading);
+}
+
+.markdown-preview em {
+  font-style: italic;
+}
+
+/* Dark theme support (when MPE detects dark mode) */
+.markdown-preview[data-theme="dark"],
+.markdown-preview.theme-dark {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #252525;
+  --bg-tertiary: #303030;
+  --text-heading: #e0dcd3;
+  --text-primary: #b0aca3;
+  --text-secondary: #9a9a9a;
+  --text-muted: #707070;
+  --accent: #d4a574;
+  --accent-hover: #e0b98a;
+  --border: #3a3a3a;
+  --border-light: #2a2a2a;
+  --code-bg: #2a2a2a;
+  --link: #d4a574;
+  --link-hover: #e8c9a0;
+}
