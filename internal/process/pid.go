@@ -1,6 +1,7 @@
 package process
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,32 +15,58 @@ const (
 	pidPrefix = "md-novel-viewer-"
 )
 
+// InstanceInfo holds metadata about a running mdview server.
+type InstanceInfo struct {
+	Port int    `json:"port"`
+	Pid  int    `json:"pid"`
+	Host string `json:"host,omitempty"`
+	Path string `json:"path,omitempty"`
+}
+
 func getPidFilePath(port int) string {
 	return filepath.Join(pidDir, fmt.Sprintf("%s%d.pid", pidPrefix, port))
 }
 
-func WritePidFile(port, pid int) {
-	os.WriteFile(getPidFilePath(port), []byte(strconv.Itoa(pid)), 0644)
+// WritePidFile stores instance metadata as JSON.
+func WritePidFile(info InstanceInfo) {
+	data, _ := json.Marshal(info)
+	os.WriteFile(getPidFilePath(info.Port), data, 0644)
 }
 
-func ReadPidFile(port int) int {
+// readInstanceInfo reads PID file and returns info.
+// Handles both JSON (new) and plain-PID (old) formats.
+func readInstanceInfo(port int) (InstanceInfo, bool) {
 	data, err := os.ReadFile(getPidFilePath(port))
 	if err != nil {
-		return 0
+		return InstanceInfo{}, false
 	}
-	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
-	if err != nil {
-		return 0
+	content := strings.TrimSpace(string(data))
+	if content == "" {
+		return InstanceInfo{}, false
 	}
-	return pid
+
+	// Try JSON first
+	var info InstanceInfo
+	if err := json.Unmarshal([]byte(content), &info); err == nil && info.Pid > 0 {
+		info.Port = port
+		return info, true
+	}
+
+	// Fallback: plain PID
+	pid, err := strconv.Atoi(content)
+	if err != nil || pid <= 0 {
+		return InstanceInfo{}, false
+	}
+	return InstanceInfo{Port: port, Pid: pid}, true
 }
 
 func RemovePidFile(port int) {
 	os.Remove(getPidFilePath(port))
 }
 
-func FindRunningInstances() []struct{ Port, Pid int } {
-	var instances []struct{ Port, Pid int }
+// FindRunningInstances returns info about all live mdview servers.
+func FindRunningInstances() []InstanceInfo {
+	var instances []InstanceInfo
 
 	entries, err := os.ReadDir(pidDir)
 	if err != nil {
@@ -56,12 +83,12 @@ func FindRunningInstances() []struct{ Port, Pid int } {
 		if err != nil {
 			continue
 		}
-		pid := ReadPidFile(port)
-		if pid == 0 {
+		info, ok := readInstanceInfo(port)
+		if !ok {
 			continue
 		}
 		// Check if process is running
-		proc, err := os.FindProcess(pid)
+		proc, err := os.FindProcess(info.Pid)
 		if err != nil {
 			RemovePidFile(port)
 			continue
@@ -70,7 +97,7 @@ func FindRunningInstances() []struct{ Port, Pid int } {
 			RemovePidFile(port)
 			continue
 		}
-		instances = append(instances, struct{ Port, Pid int }{port, pid})
+		instances = append(instances, info)
 	}
 	return instances
 }

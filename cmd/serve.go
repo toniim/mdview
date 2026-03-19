@@ -120,7 +120,12 @@ func runServe(cmd *cobra.Command, args []string) error {
 	})
 
 	// Write PID file
-	process.WritePidFile(actualPort, os.Getpid())
+	process.WritePidFile(process.InstanceInfo{
+		Port: actualPort,
+		Pid:  os.Getpid(),
+		Host: host,
+		Path: resolved.Path,
+	})
 
 	// Setup shutdown
 	sigCh := make(chan os.Signal, 1)

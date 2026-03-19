@@ -17,5 +17,6 @@ func Execute() error {
 func init() {
 	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(stopCmd)
+	rootCmd.AddCommand(listCmd)
 	rootCmd.AddCommand(versionCmd)
 }
