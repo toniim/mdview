@@ -31,6 +31,10 @@ mdview serve ~/docs --open
 
 # Bind to network address (be careful!)
 mdview serve ~/docs --host 0.0.0.0
+
+# Static mode — serve a folder as plain files (no rendering)
+mdview static                # current directory
+mdview static ~/site         # specific directory
 ```
 
 Then open your browser to `http://localhost:3456`
@@ -88,11 +92,15 @@ mdview stop
 ## CLI Reference
 
 ```bash
-mdview serve <path> [flags]    # Start server
+mdview serve <path> [flags]    # Render markdown/code; browse directories
+mdview static [path] [flags]   # Plain static file server (no rendering); defaults to .
   -p, --port int               #   Port (default 3456)
-  -H, --host string            #   Host (default localhost)
+  -H, --host string            #   Host (default 0.0.0.0)
   -o, --open                   #   Auto-open browser
+  --no-open                    #   Don't open browser
+  --public                     #   Shortcut for --host 0.0.0.0
   --foreground                 #   JSON output for Claude Code
+mdview list                    # List running instances
 mdview stop                    # Stop all instances
 mdview version                 # Print version
 ```
