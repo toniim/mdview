@@ -163,7 +163,7 @@ Go 1.22 | Goldmark | Chroma v2 | Mermaid v11 | Vanilla JS + CSS
 
 ## License
 
-MIT
+[MIT](LICENSE)
 
 ---
 
